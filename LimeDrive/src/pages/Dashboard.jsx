@@ -8,6 +8,7 @@ export default function Dashboard() {
   const { user, signOut } = useAuth()
   const navigate = useNavigate()
   const [refreshFiles, setRefreshFiles] = useState(0)
+  const [currentFolderId, setCurrentFolderId] = useState(null)
 
   const handleSignOut = async () => {
     await signOut()
@@ -83,12 +84,17 @@ export default function Dashboard() {
           {/* File Upload */}
           <div style={{ marginBottom: '2rem' }}>
             <UploadBox 
+              currentFolderId={currentFolderId}
               onUploadSuccess={() => setRefreshFiles(prev => prev + 1)}
             />
           </div>
 
           {/* File List */}
-          <FileList refreshTrigger={refreshFiles} />
+          <FileList 
+            refreshTrigger={refreshFiles} 
+            currentFolderId={currentFolderId}
+            setCurrentFolderId={setCurrentFolderId}
+          />
         </div>
       </main>
     </div>

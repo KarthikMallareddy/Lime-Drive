@@ -2,7 +2,7 @@ import { useState } from 'react'
 import { supabase } from '../supabaseClient'
 import { useAuth } from '../hooks/useAuth'
 
-export default function UploadBox({ onUploadSuccess }) {
+export default function UploadBox({ currentFolderId, onUploadSuccess }) {
   const [uploading, setUploading] = useState(false)
   const [dragActive, setDragActive] = useState(false)
   const { user } = useAuth()
@@ -44,7 +44,8 @@ export default function UploadBox({ onUploadSuccess }) {
           path: filePath,
           filename: file.name,
           size: file.size,
-          content_type: file.type || 'application/octet-stream'
+          content_type: file.type || 'application/octet-stream',
+          folder_id: currentFolderId
         }])
 
       if (dbError) {
@@ -141,7 +142,7 @@ export default function UploadBox({ onUploadSuccess }) {
             Drop files here or click to browse
           </p>
           <p style={{ color: '#666', margin: 0, fontSize: '0.9rem' }}>
-            Upload any file to your personal cloud storage
+            {currentFolderId ? 'Upload to current folder' : 'Upload to your personal cloud storage'}
           </p>
         </div>
       )}
