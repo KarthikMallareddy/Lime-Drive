@@ -4,7 +4,10 @@ import { useAuth } from '../hooks/useAuth'
 
 export default function FileList({ refreshTrigger }) {
   const [files, setFiles] = useState([])
+  const [filteredFiles, setFilteredFiles] = useState([])
   const [loading, setLoading] = useState(true)
+  const [searchTerm, setSearchTerm] = useState('')
+  const [selectedFilter, setSelectedFilter] = useState('all')
   const { user } = useAuth()
 
   const fetchFiles = async () => {
@@ -20,19 +23,71 @@ export default function FileList({ refreshTrigger }) {
 
       if (error) throw error
       setFiles(data || [])
+      setFilteredFiles(data || [])
     } catch (error) {
       console.error('Error fetching files:', error.message)
     } finally {
       setLoading(false)
     }
   }
-
   useEffect(() => {
     fetchFiles()
   }, [user, refreshTrigger])
 
+  // Filter and search files
+  useEffect(() => {
+    let filtered = [...files]
+
+    // Apply search filter
+    if (searchTerm) {
+      filtered = filtered.filter(file => 
+        file.filename.toLowerCase().includes(searchTerm.toLowerCase())
+      )
+    }
+
+    // Apply type filter
+    if (selectedFilter !== 'all') {
+      filtered = filtered.filter(file => {
+        const type = file.content_type || ''
+        switch (selectedFilter) {
+          case 'images':
+            return type.startsWith('image/')
+          case 'documents':
+            return type.includes('pdf') || 
+                   type.includes('document') || 
+                   type.includes('text') ||
+                   type.includes('msword') ||
+                   type.includes('officedocument')
+          case 'videos':
+            return type.startsWith('video/')
+          case 'audio':
+            return type.startsWith('audio/')
+          default:
+            return true
+        }
+      })
+    }
+
+    setFilteredFiles(filtered)
+  }, [files, searchTerm, selectedFilter])
+
+  const getFileTypeIcon = (contentType) => {
+    if (!contentType) return '📄'
+    
+    if (contentType.startsWith('image/')) return '🖼️'
+    if (contentType.startsWith('video/')) return '🎥'
+    if (contentType.startsWith('audio/')) return '🎵'
+    if (contentType.includes('pdf')) return '📕'
+    if (contentType.includes('document') || contentType.includes('msword') || contentType.includes('officedocument')) return '📄'
+    if (contentType.includes('spreadsheet') || contentType.includes('excel')) return '📊'
+    if (contentType.includes('presentation') || contentType.includes('powerpoint')) return '📈'
+    if (contentType.includes('zip') || contentType.includes('rar') || contentType.includes('tar')) return '📦'
+    
+    return '📄'
+  }
+
   const deleteFile = async (file) => {
-    if (!confirm(`Delete "${file.filename}"?`)) return
+    if (!confirm('Delete "' + file.filename + '"?')) return
 
     try {
       // Delete from storage
@@ -107,22 +162,6 @@ export default function FileList({ refreshTrigger }) {
     )
   }
 
-  if (files.length === 0) {
-    return (
-      <div style={{ 
-        textAlign: 'center', 
-        padding: '3rem', 
-        color: '#999',
-        backgroundColor: '#fafafa',
-        borderRadius: '8px',
-        border: '1px solid #eee'
-      }}>
-        <div style={{ fontSize: '2rem', marginBottom: '1rem' }}>📁</div>
-        <p>No files uploaded yet</p>
-      </div>
-    )
-  }
-
   return (
     <div style={{ 
       backgroundColor: 'white', 
@@ -130,17 +169,100 @@ export default function FileList({ refreshTrigger }) {
       border: '1px solid #eee',
       overflow: 'hidden'
     }}>
+      {/* Search and Filter Header */}
       <div style={{
         padding: '1rem',
         backgroundColor: '#f8f9fa',
-        borderBottom: '1px solid #eee',
-        fontWeight: 'bold',
-        color: '#333'
+        borderBottom: '1px solid #eee'
       }}>
-        Your Files ({files.length})
+        <div style={{
+          display: 'flex',
+          justifyContent: 'space-between',
+          alignItems: 'center',
+          marginBottom: '1rem',
+          flexWrap: 'wrap',
+          gap: '1rem'
+        }}>
+          <div style={{ fontWeight: 'bold', color: '#333' }}>
+            Your Files ({filteredFiles.length} of {files.length})
+          </div>
+          
+          {/* Search Input */}
+          <input
+            type="text"
+            placeholder="Search files..."
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+            style={{
+              padding: '0.5rem',
+              border: '1px solid #ddd',
+              borderRadius: '4px',
+              fontSize: '0.9rem',
+              minWidth: '200px',
+              flex: '1',
+              maxWidth: '300px'
+            }}
+          />
+        </div>
+
+        {/* Filter Buttons */}
+        <div style={{
+          display: 'flex',
+          gap: '0.5rem',
+          flexWrap: 'wrap'
+        }}>
+          {[
+            { key: 'all', label: 'All Files', icon: '📁' },
+            { key: 'images', label: 'Images', icon: '🖼️' },
+            { key: 'documents', label: 'Documents', icon: '📄' },
+            { key: 'videos', label: 'Videos', icon: '🎥' },
+            { key: 'audio', label: 'Audio', icon: '🎵' }
+          ].map(filter => (
+            <button
+              key={filter.key}
+              onClick={() => setSelectedFilter(filter.key)}
+              style={{
+                padding: '0.5rem 0.75rem',
+                border: '1px solid #ddd',
+                borderRadius: '4px',
+                backgroundColor: selectedFilter === filter.key ? '#A9FF00' : 'white',
+                color: selectedFilter === filter.key ? '#000' : '#666',
+                cursor: 'pointer',
+                fontSize: '0.85rem',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '0.25rem'
+              }}
+            >
+              <span>{filter.icon}</span>
+              {filter.label}
+            </button>
+          ))}
+        </div>
       </div>
 
-      {files.map((file) => (
+      {/* Empty State */}
+      {files.length === 0 ? (
+        <div style={{ 
+          textAlign: 'center', 
+          padding: '3rem', 
+          color: '#999'
+        }}>
+          <div style={{ fontSize: '2rem', marginBottom: '1rem' }}>📁</div>
+          <p>No files uploaded yet</p>
+        </div>
+      ) : filteredFiles.length === 0 ? (
+        <div style={{ 
+          textAlign: 'center', 
+          padding: '2rem', 
+          color: '#999'
+        }}>
+          <div style={{ fontSize: '2rem', marginBottom: '1rem' }}>🔍</div>
+          <p>No files match your search</p>
+        </div>
+      ) : null}
+
+      {filteredFiles.map((file) => (
         <div
           key={file.id}
           style={{
@@ -156,8 +278,12 @@ export default function FileList({ refreshTrigger }) {
             <div style={{ 
               fontWeight: 'bold', 
               marginBottom: '0.25rem',
-              color: '#333'
+              color: '#333',
+              display: 'flex',
+              alignItems: 'center',
+              gap: '0.5rem'
             }}>
+              <span style={{ fontSize: '1.2rem' }}>{getFileTypeIcon(file.content_type)}</span>
               {file.filename}
             </div>
             <div style={{ 
