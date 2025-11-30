@@ -13,10 +13,14 @@ export default function FileList({ refreshTrigger, currentFolderId, setCurrentFo
   const [breadcrumbs, setBreadcrumbs] = useState([{ id: null, name: 'Home' }])
   const [showNewFolderInput, setShowNewFolderInput] = useState(false)
   const [newFolderName, setNewFolderName] = useState('')
-  const [showMoveModal, setShowMoveModal] = useState(false)
-  const [fileToMove, setFileToMove] = useState(null)
+  const [showActionModal, setShowActionModal] = useState(false)
+  const [fileToProcess, setFileToProcess] = useState(null)
+  const [actionType, setActionType] = useState('move') // 'move' or 'copy'
   const [allFolders, setAllFolders] = useState([])
-  const [selectedMoveFolder, setSelectedMoveFolder] = useState(null)
+  const [selectedTargetFolder, setSelectedTargetFolder] = useState(null)
+  const [draggedItem, setDraggedItem] = useState(null)
+  const [dragOverFolder, setDragOverFolder] = useState(null)
+  const [openMenuId, setOpenMenuId] = useState(null)
   const { user } = useAuth()
 
   const fetchFiles = async () => {
@@ -116,31 +120,130 @@ export default function FileList({ refreshTrigger, currentFolderId, setCurrentFo
     }
   }
   
-  const openMoveModal = (file) => {
-    setFileToMove(file)
-    setSelectedMoveFolder(null)
-    setShowMoveModal(true)
+  const openActionModal = (file, action) => {
+    setFileToProcess(file)
+    setActionType(action)
+    setSelectedTargetFolder(null)
+    setShowActionModal(true)
+    setOpenMenuId(null)
     fetchAllFolders()
   }
   
-  const moveFile = async () => {
-    if (!fileToMove) return
+  const processFile = async () => {
+    if (!fileToProcess) return
     
     try {
-      const { error } = await supabase
-        .from('files')
-        .update({ folder_id: selectedMoveFolder })
-        .eq('id', fileToMove.id)
+      if (actionType === 'move') {
+        // Move file
+        const { error } = await supabase
+          .from('files')
+          .update({ folder_id: selectedTargetFolder })
+          .eq('id', fileToProcess.id)
+        
+        if (error) throw error
+      } else if (actionType === 'copy') {
+        // Copy file - duplicate the database entry with new folder_id
+        const { data: originalFile, error: fetchError } = await supabase
+          .from('files')
+          .select('*')
+          .eq('id', fileToProcess.id)
+          .single()
+        
+        if (fetchError) throw fetchError
+        
+        // Create new filename with copy suffix
+        const timestamp = Date.now()
+        const fileExt = originalFile.filename.split('.').pop()
+        const baseName = originalFile.filename.replace(`.${fileExt}`, '')
+        const newFileName = `${baseName} (Copy ${timestamp}).${fileExt}`
+        
+        // Copy the storage file
+        const { data: fileData, error: downloadError } = await supabase.storage
+          .from('users')
+          .download(originalFile.path)
+        
+        if (downloadError) throw downloadError
+        
+        // Upload to new path
+        const newPath = `${user.id}/${timestamp}-${newFileName}`
+        const { error: uploadError } = await supabase.storage
+          .from('users')
+          .upload(newPath, fileData)
+        
+        if (uploadError) throw uploadError
+        
+        // Insert new database record
+        const { error: insertError } = await supabase
+          .from('files')
+          .insert([{
+            user_id: user.id,
+            path: newPath,
+            filename: newFileName,
+            size: originalFile.size,
+            content_type: originalFile.content_type,
+            folder_id: selectedTargetFolder
+          }])
+        
+        if (insertError) throw insertError
+      }
       
-      if (error) throw error
-      
-      setShowMoveModal(false)
-      setFileToMove(null)
-      setSelectedMoveFolder(null)
+      setShowActionModal(false)
+      setFileToProcess(null)
+      setSelectedTargetFolder(null)
       fetchFiles()
     } catch (error) {
-      console.error('Error moving file:', error.message)
-      alert('Failed to move file: ' + error.message)
+      console.error(`Error ${actionType}ing file:`, error.message)
+      alert(`Failed to ${actionType} file: ` + error.message)
+    }
+  }
+  
+  const handleDragStart = (e, item, type) => {
+    setDraggedItem({ ...item, type }) // type: 'file' or 'folder'
+    e.dataTransfer.effectAllowed = 'move'
+  }
+  
+  const handleDragOver = (e, folderId) => {
+    e.preventDefault()
+    e.dataTransfer.dropEffect = 'move'
+    setDragOverFolder(folderId)
+  }
+  
+  const handleDragLeave = () => {
+    setDragOverFolder(null)
+  }
+  
+  const handleDrop = async (e, targetFolderId) => {
+    e.preventDefault()
+    setDragOverFolder(null)
+    
+    if (!draggedItem) return
+    
+    try {
+      if (draggedItem.type === 'file') {
+        const { error } = await supabase
+          .from('files')
+          .update({ folder_id: targetFolderId })
+          .eq('id', draggedItem.id)
+        
+        if (error) throw error
+      } else if (draggedItem.type === 'folder') {
+        // Prevent dropping folder into itself or its children
+        if (draggedItem.id === targetFolderId) return
+        
+        const { error } = await supabase
+          .from('folders')
+          .update({ parent_id: targetFolderId })
+          .eq('id', draggedItem.id)
+        
+        if (error) throw error
+      }
+      
+      fetchFiles()
+    } catch (error) {
+      console.error('Error in drag and drop:', error.message)
+      alert('Failed to move item: ' + error.message)
+    } finally {
+      setDraggedItem(null)
     }
   }
   
@@ -561,6 +664,11 @@ export default function FileList({ refreshTrigger, currentFolderId, setCurrentFo
       {filteredFolders.map((folder) => (
         <div
           key={folder.id}
+          draggable
+          onDragStart={(e) => handleDragStart(e, folder, 'folder')}
+          onDragOver={(e) => handleDragOver(e, folder.id)}
+          onDragLeave={handleDragLeave}
+          onDrop={(e) => handleDrop(e, folder.id)}
           style={{
             padding: '1rem',
             borderBottom: '1px solid #eee',
@@ -568,7 +676,9 @@ export default function FileList({ refreshTrigger, currentFolderId, setCurrentFo
             alignItems: 'center',
             justifyContent: 'space-between',
             cursor: 'pointer',
-            ':hover': { backgroundColor: '#f8f9fa' }
+            backgroundColor: dragOverFolder === folder.id ? '#e8f5e8' : 'transparent',
+            ':hover': { backgroundColor: '#f8f9fa' },
+            position: 'relative'
           }}
           onClick={() => navigateToFolder(folder.id)}
         >
@@ -592,24 +702,57 @@ export default function FileList({ refreshTrigger, currentFolderId, setCurrentFo
             </div>
           </div>
 
-          <div style={{ display: 'flex', gap: '0.5rem' }}>
+          <div style={{ display: 'flex', alignItems: 'center', position: 'relative' }}>
             <button
               onClick={(e) => {
                 e.stopPropagation()
-                deleteFolder(folder)
+                setOpenMenuId(openMenuId === `folder-${folder.id}` ? null : `folder-${folder.id}`)
               }}
               style={{
-                backgroundColor: '#ff4757',
-                color: 'white',
+                background: 'none',
                 border: 'none',
-                padding: '0.5rem 1rem',
-                borderRadius: '4px',
+                padding: '0.5rem',
                 cursor: 'pointer',
-                fontSize: '0.9rem'
+                fontSize: '1.2rem',
+                color: '#666',
+                borderRadius: '4px'
               }}
             >
-              Delete
+              ⋯
             </button>
+            
+            {openMenuId === `folder-${folder.id}` && (
+              <div style={{
+                position: 'absolute',
+                top: '100%',
+                right: 0,
+                backgroundColor: 'white',
+                border: '1px solid #ddd',
+                borderRadius: '4px',
+                boxShadow: '0 2px 8px rgba(0,0,0,0.1)',
+                zIndex: 100,
+                minWidth: '120px'
+              }}>
+                <button
+                  onClick={(e) => {
+                    e.stopPropagation()
+                    deleteFolder(folder)
+                  }}
+                  style={{
+                    display: 'block',
+                    width: '100%',
+                    padding: '0.5rem 1rem',
+                    border: 'none',
+                    background: 'none',
+                    textAlign: 'left',
+                    cursor: 'pointer',
+                    color: '#ff4757'
+                  }}
+                >
+                  🗑️ Delete
+                </button>
+              </div>
+            )}
           </div>
         </div>
       ))}
@@ -618,13 +761,16 @@ export default function FileList({ refreshTrigger, currentFolderId, setCurrentFo
       {filteredFiles.map((file) => (
         <div
           key={file.id}
+          draggable
+          onDragStart={(e) => handleDragStart(e, file, 'file')}
           style={{
             padding: '1rem',
             borderBottom: '1px solid #eee',
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'space-between',
-            ':last-child': { borderBottom: 'none' }
+            ':last-child': { borderBottom: 'none' },
+            position: 'relative'
           }}
         >
           <div style={{ flex: 1 }}>
@@ -650,80 +796,138 @@ export default function FileList({ refreshTrigger, currentFolderId, setCurrentFo
             </div>
           </div>
 
-          <div style={{ display: 'flex', gap: '0.5rem' }}>
+          <div style={{ display: 'flex', alignItems: 'center', position: 'relative' }}>
             <button
-              onClick={() => downloadFile(file)}
+              onClick={() => setOpenMenuId(openMenuId === `file-${file.id}` ? null : `file-${file.id}`)}
               style={{
-                backgroundColor: '#A9FF00',
-                color: '#000',
+                background: 'none',
                 border: 'none',
-                padding: '0.5rem 1rem',
-                borderRadius: '4px',
+                padding: '0.5rem',
                 cursor: 'pointer',
-                fontSize: '0.9rem',
-                fontWeight: 'bold'
+                fontSize: '1.2rem',
+                color: '#666',
+                borderRadius: '4px'
               }}
             >
-              Download
+              ⋯
             </button>
-            <button
-              onClick={() => openMoveModal(file)}
-              style={{
-                backgroundColor: '#3498db',
-                color: 'white',
-                border: 'none',
-                padding: '0.5rem 1rem',
+            
+            {openMenuId === `file-${file.id}` && (
+              <div style={{
+                position: 'absolute',
+                top: '100%',
+                right: 0,
+                backgroundColor: 'white',
+                border: '1px solid #ddd',
                 borderRadius: '4px',
-                cursor: 'pointer',
-                fontSize: '0.9rem'
-              }}
-            >
-              Move
-            </button>
-            <button
-              onClick={() => deleteFile(file)}
-              style={{
-                backgroundColor: '#ff4757',
-                color: 'white',
-                border: 'none',
-                padding: '0.5rem 1rem',
-                borderRadius: '4px',
-                cursor: 'pointer',
-                fontSize: '0.9rem'
-              }}
-            >
-              Delete
-            </button>
+                boxShadow: '0 2px 8px rgba(0,0,0,0.1)',
+                zIndex: 100,
+                minWidth: '140px'
+              }}>
+                <button
+                  onClick={() => downloadFile(file)}
+                  style={{
+                    display: 'block',
+                    width: '100%',
+                    padding: '0.5rem 1rem',
+                    border: 'none',
+                    background: 'none',
+                    textAlign: 'left',
+                    cursor: 'pointer',
+                    color: '#333'
+                  }}
+                >
+                  📥 Download
+                </button>
+                <button
+                  onClick={() => openActionModal(file, 'move')}
+                  style={{
+                    display: 'block',
+                    width: '100%',
+                    padding: '0.5rem 1rem',
+                    border: 'none',
+                    background: 'none',
+                    textAlign: 'left',
+                    cursor: 'pointer',
+                    color: '#3498db'
+                  }}
+                >
+                  📁 Move
+                </button>
+                <button
+                  onClick={() => openActionModal(file, 'copy')}
+                  style={{
+                    display: 'block',
+                    width: '100%',
+                    padding: '0.5rem 1rem',
+                    border: 'none',
+                    background: 'none',
+                    textAlign: 'left',
+                    cursor: 'pointer',
+                    color: '#9b59b6'
+                  }}
+                >
+                  📋 Copy
+                </button>
+                <button
+                  onClick={() => deleteFile(file)}
+                  style={{
+                    display: 'block',
+                    width: '100%',
+                    padding: '0.5rem 1rem',
+                    border: 'none',
+                    background: 'none',
+                    textAlign: 'left',
+                    cursor: 'pointer',
+                    color: '#ff4757'
+                  }}
+                >
+                  🗑️ Delete
+                </button>
+              </div>
+            )}
           </div>
         </div>
       ))}
       
-      {/* Move File Modal */}
-      {showMoveModal && (
-        <div style={{
-          position: 'fixed',
-          top: 0,
-          left: 0,
-          right: 0,
-          bottom: 0,
-          backgroundColor: 'rgba(0, 0, 0, 0.5)',
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          zIndex: 1000
-        }}>
-          <div style={{
-            backgroundColor: 'white',
-            borderRadius: '8px',
-            padding: '2rem',
-            minWidth: '400px',
-            maxWidth: '90vw',
-            maxHeight: '80vh',
-            overflow: 'auto'
-          }}>
-            <h3 style={{ margin: '0 0 1rem 0' }}>Move File</h3>
+      {/* Action Modal (Move/Copy) */}
+      {showActionModal && (
+        <div 
+          style={{
+            position: 'fixed',
+            top: 0,
+            left: 0,
+            right: 0,
+            bottom: 0,
+            backgroundColor: 'rgba(0, 0, 0, 0.5)',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            zIndex: 1000
+          }}
+          onClick={() => {
+            setShowActionModal(false)
+            setFileToProcess(null)
+            setSelectedTargetFolder(null)
+          }}
+        >
+          <div 
+            style={{
+              backgroundColor: 'white',
+              borderRadius: '8px',
+              padding: '2rem',
+              minWidth: '400px',
+              maxWidth: '90vw',
+              maxHeight: '80vh',
+              overflow: 'auto'
+            }}
+            onClick={(e) => e.stopPropagation()}
+          >
+            <h3 style={{ margin: '0 0 1rem 0' }}>
+              {actionType === 'move' ? 'Move' : 'Copy'} File
+            </h3>
             <p style={{ margin: '0 0 1rem 0', color: '#666' }}>
-              Move "{fileToMove?.filename}" to a folder:
+              {actionType === 'move' ? 'Move' : 'Copy'} "{fileToProcess?.filename}" to a folder:
             </p>
             
             <div style={{
@@ -735,11 +939,11 @@ export default function FileList({ refreshTrigger, currentFolderId, setCurrentFo
             }}>
               {/* Home/Root option */}
               <div
-                onClick={() => setSelectedMoveFolder(null)}
+                onClick={() => setSelectedTargetFolder(null)}
                 style={{
                   padding: '0.75rem',
                   cursor: 'pointer',
-                  backgroundColor: selectedMoveFolder === null ? '#e3f2fd' : 'white',
+                  backgroundColor: selectedTargetFolder === null ? '#e3f2fd' : 'white',
                   borderBottom: '1px solid #eee',
                   display: 'flex',
                   alignItems: 'center',
@@ -747,7 +951,7 @@ export default function FileList({ refreshTrigger, currentFolderId, setCurrentFo
                 }}
               >
                 <span>🏠</span>
-                <span style={{ fontWeight: selectedMoveFolder === null ? 'bold' : 'normal' }}>
+                <span style={{ fontWeight: selectedTargetFolder === null ? 'bold' : 'normal' }}>
                   Home (Root)
                 </span>
               </div>
@@ -756,11 +960,11 @@ export default function FileList({ refreshTrigger, currentFolderId, setCurrentFo
               {allFolders.map((folder) => (
                 <div
                   key={folder.id}
-                  onClick={() => setSelectedMoveFolder(folder.id)}
+                  onClick={() => setSelectedTargetFolder(folder.id)}
                   style={{
                     padding: '0.75rem',
                     cursor: 'pointer',
-                    backgroundColor: selectedMoveFolder === folder.id ? '#e3f2fd' : 'white',
+                    backgroundColor: selectedTargetFolder === folder.id ? '#e3f2fd' : 'white',
                     borderBottom: '1px solid #eee',
                     display: 'flex',
                     alignItems: 'center',
@@ -769,7 +973,7 @@ export default function FileList({ refreshTrigger, currentFolderId, setCurrentFo
                 >
                   <span>📁</span>
                   <div>
-                    <div style={{ fontWeight: selectedMoveFolder === folder.id ? 'bold' : 'normal' }}>
+                    <div style={{ fontWeight: selectedTargetFolder === folder.id ? 'bold' : 'normal' }}>
                       {folder.name}
                     </div>
                     <div style={{ fontSize: '0.8rem', color: '#666' }}>
@@ -797,9 +1001,9 @@ export default function FileList({ refreshTrigger, currentFolderId, setCurrentFo
             }}>
               <button
                 onClick={() => {
-                  setShowMoveModal(false)
-                  setFileToMove(null)
-                  setSelectedMoveFolder(null)
+                  setShowActionModal(false)
+                  setFileToProcess(null)
+                  setSelectedTargetFolder(null)
                 }}
                 style={{
                   backgroundColor: '#f5f5f5',
@@ -813,9 +1017,9 @@ export default function FileList({ refreshTrigger, currentFolderId, setCurrentFo
                 Cancel
               </button>
               <button
-                onClick={moveFile}
+                onClick={processFile}
                 style={{
-                  backgroundColor: '#3498db',
+                  backgroundColor: actionType === 'move' ? '#3498db' : '#9b59b6',
                   color: 'white',
                   border: 'none',
                   padding: '0.5rem 1rem',
@@ -824,11 +1028,26 @@ export default function FileList({ refreshTrigger, currentFolderId, setCurrentFo
                   fontWeight: 'bold'
                 }}
               >
-                Move File
+                {actionType === 'move' ? 'Move' : 'Copy'} File
               </button>
             </div>
           </div>
         </div>
+      )}
+      
+      {/* Click outside handler for menus */}
+      {openMenuId && (
+        <div
+          style={{
+            position: 'fixed',
+            top: 0,
+            left: 0,
+            right: 0,
+            bottom: 0,
+            zIndex: 50
+          }}
+          onClick={() => setOpenMenuId(null)}
+        />
       )}
     </div>
   )
