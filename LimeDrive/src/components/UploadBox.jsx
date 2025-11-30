@@ -8,15 +8,26 @@ export default function UploadBox({ onUploadSuccess }) {
   const { user } = useAuth()
 
   const uploadFile = async (file) => {
-    if (!file || !user) return
+    if (!file || !user) {
+      console.error('Upload failed: Missing file or user', { file: !!file, user: !!user })
+      return
+    }
 
     setUploading(true)
     try {
+      // Verify user session is still valid
+      const { data: { session }, error: sessionError } = await supabase.auth.getSession()
+      if (sessionError || !session) {
+        throw new Error('Authentication session expired. Please log in again.')
+      }
+
       // Create unique filename with timestamp
       const timestamp = Date.now()
       const fileExt = file.name.split('.').pop()
       const fileName = `${timestamp}-${file.name}`
-      const filePath = `users/${user.id}/${fileName}`
+      const filePath = `${user.id}/${fileName}`  // Remove 'users/' prefix
+
+      console.log('Upload details:', { userId: user.id, filePath, fileName })
 
       // Upload to Supabase Storage
       const { data: uploadData, error: uploadError } = await supabase.storage
@@ -28,15 +39,18 @@ export default function UploadBox({ onUploadSuccess }) {
       // Insert file metadata into database
       const { error: dbError } = await supabase
         .from('files')
-        .insert({
+        .insert([{
           user_id: user.id,
           path: filePath,
           filename: file.name,
           size: file.size,
-          content_type: file.type
-        })
+          content_type: file.type || 'application/octet-stream'
+        }])
 
-      if (dbError) throw dbError
+      if (dbError) {
+        console.error('Database error:', dbError)
+        throw dbError
+      }
 
       // Call success callback
       if (onUploadSuccess) {
@@ -45,8 +59,15 @@ export default function UploadBox({ onUploadSuccess }) {
 
       console.log('File uploaded successfully:', fileName)
     } catch (error) {
-      console.error('Upload error:', error.message)
-      alert('Upload failed: ' + error.message)
+      console.error('Upload error:', error)
+      
+      // If storage upload succeeded but database failed, try to clean up
+      if (error.message.includes('row-level security policy')) {
+        console.error('RLS Policy Error - User ID:', user.id)
+        alert('Upload failed: Authentication issue. Please try logging out and back in.')
+      } else {
+        alert('Upload failed: ' + error.message)
+      }
     } finally {
       setUploading(false)
     }
