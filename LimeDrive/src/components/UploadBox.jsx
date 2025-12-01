@@ -100,14 +100,18 @@ export default function UploadBox({ currentFolderId, onUploadSuccess }) {
       onDragLeave={() => setDragActive(false)}
       onDrop={handleDrop}
       style={{
-        border: `2px dashed ${dragActive ? '#A9FF00' : '#ddd'}`,
-        borderRadius: '8px',
-        padding: '2rem',
+        border: `2px dashed ${dragActive ? '#A9FF00' : '#d1d5db'}`,
+        borderRadius: '12px',
+        padding: '3rem 2rem',
         textAlign: 'center',
-        backgroundColor: dragActive ? '#f8fff8' : '#fafafa',
-        transition: 'all 0.2s ease',
+        backgroundColor: dragActive ? '#f0fdf4' : '#f8fafc',
+        transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
         cursor: 'pointer',
-        position: 'relative'
+        position: 'relative',
+        transform: dragActive ? 'scale(1.02)' : 'scale(1)',
+        boxShadow: dragActive 
+          ? '0 10px 25px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05)'
+          : '0 1px 3px 0 rgba(0, 0, 0, 0.1), 0 1px 2px 0 rgba(0, 0, 0, 0.06)'
       }}
     >
       <input
@@ -127,25 +131,116 @@ export default function UploadBox({ currentFolderId, onUploadSuccess }) {
 
       {uploading ? (
         <div>
-          <div style={{ fontSize: '2rem', marginBottom: '1rem' }}>⏳</div>
-          <p style={{ color: '#666', margin: 0 }}>Uploading...</p>
+          <div style={{ 
+            fontSize: '3rem', 
+            marginBottom: '1rem',
+            animation: 'bounce 1s infinite'
+          }}>
+            ☁️
+          </div>
+          <p style={{ 
+            color: '#3b82f6', 
+            margin: 0,
+            fontSize: '1.125rem',
+            fontWeight: '600'
+          }}>
+            Uploading your file...
+          </p>
+          <div style={{
+            width: '200px',
+            height: '4px',
+            backgroundColor: '#e5e7eb',
+            borderRadius: '2px',
+            margin: '1rem auto 0',
+            overflow: 'hidden'
+          }}>
+            <div style={{
+              width: '100%',
+              height: '100%',
+              backgroundColor: '#A9FF00',
+              borderRadius: '2px',
+              animation: 'progress 2s ease-in-out infinite'
+            }} />
+          </div>
         </div>
       ) : (
         <div>
-          <div style={{ fontSize: '3rem', marginBottom: '1rem' }}>☁️</div>
+          <div style={{ 
+            fontSize: '4rem', 
+            marginBottom: '1.5rem',
+            filter: 'drop-shadow(0 4px 6px rgba(0, 0, 0, 0.1))'
+          }}>
+            ☁️
+          </div>
           <p style={{ 
-            color: '#333', 
-            fontSize: '1.1rem', 
-            marginBottom: '0.5rem',
-            fontWeight: 'bold'
+            color: '#1e293b', 
+            fontSize: '1.25rem', 
+            marginBottom: '0.75rem',
+            fontWeight: '700',
+            letterSpacing: '-0.025em'
           }}>
             Drop files here or click to browse
           </p>
-          <p style={{ color: '#666', margin: 0, fontSize: '0.9rem' }}>
-            {currentFolderId ? 'Upload to current folder' : 'Upload to your personal cloud storage'}
+          <p style={{ 
+            color: '#64748b', 
+            margin: 0, 
+            fontSize: '1rem',
+            lineHeight: '1.5'
+          }}>
+            {currentFolderId 
+              ? '📁 Upload to current folder' 
+              : '🏠 Upload to your personal cloud storage'
+            }
           </p>
+          <div style={{
+            marginTop: '1.5rem',
+            padding: '0.75rem 1.5rem',
+            backgroundColor: 'rgba(169, 255, 0, 0.1)',
+            borderRadius: '8px',
+            border: '1px solid rgba(169, 255, 0, 0.3)',
+            display: 'inline-block'
+          }}>
+            <span style={{
+              color: '#16a34a',
+              fontSize: '0.875rem',
+              fontWeight: '600'
+            }}>
+              ✨ Supports all file types
+            </span>
+          </div>
         </div>
       )}
+      
+      <style>
+        {`
+          @keyframes bounce {
+            0%, 20%, 53%, 80%, 100% {
+              transform: translate3d(0,0,0);
+            }
+            40%, 43% {
+              transform: translate3d(0, -8px, 0);
+            }
+            70% {
+              transform: translate3d(0, -4px, 0);
+            }
+            90% {
+              transform: translate3d(0, -2px, 0);
+            }
+          }
+          
+          @keyframes progress {
+            0% {
+              transform: translateX(-100%);
+            }
+            50% {
+              transform: translateX(0%);
+            }
+            100% {
+              transform: translateX(100%);
+            }
+          }
+        `}
+      </style>
     </div>
   )
 }
