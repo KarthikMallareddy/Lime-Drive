@@ -616,14 +616,20 @@ export default function FileList({ refreshTrigger, currentFolderId, setCurrentFo
                 maxWidth: '320px',
                 outline: 'none',
                 transition: 'all 0.2s ease-in-out',
-                backgroundColor: '#ffffff'
+                backgroundColor: '#ffffff',
+                color: '#1e293b',
+                cursor: 'text',
+                caretColor: '#3b82f6',
+                lineHeight: '1.5'
               }}
               onFocus={(e) => {
                 e.target.style.borderColor = '#3b82f6'
+                e.target.style.backgroundColor = '#ffffff'
                 e.target.style.boxShadow = '0 0 0 3px rgba(59, 130, 246, 0.1)'
               }}
               onBlur={(e) => {
                 e.target.style.borderColor = '#d1d5db'
+                e.target.style.backgroundColor = '#ffffff'
                 e.target.style.boxShadow = 'none'
               }}
             />
