@@ -440,8 +440,71 @@ export default function FileList({ refreshTrigger, currentFolderId, setCurrentFo
 
   if (loading) {
     return (
-      <div style={{ textAlign: 'center', padding: '2rem', color: '#666' }}>
-        Loading files...
+      <div style={{ 
+        backgroundColor: 'white', 
+        borderRadius: '12px',
+        border: '1px solid #e0e7ff',
+        overflow: 'hidden'
+      }}>
+        {/* Loading Header */}
+        <div style={{
+          padding: '1.5rem',
+          backgroundColor: '#f8fafc',
+          borderBottom: '1px solid #e0e7ff'
+        }}>
+          <div style={{
+            height: '24px',
+            backgroundColor: '#e2e8f0',
+            borderRadius: '6px',
+            width: '200px',
+            animation: 'pulse 1.5s ease-in-out infinite'
+          }} />
+        </div>
+        
+        {/* Loading Items */}
+        {[...Array(5)].map((_, index) => (
+          <div key={index} style={{
+            padding: '1.5rem',
+            borderBottom: '1px solid #f1f5f9',
+            display: 'flex',
+            alignItems: 'center',
+            gap: '1rem'
+          }}>
+            <div style={{
+              width: '40px',
+              height: '40px',
+              backgroundColor: '#e2e8f0',
+              borderRadius: '8px',
+              animation: 'pulse 1.5s ease-in-out infinite'
+            }} />
+            <div style={{ flex: 1 }}>
+              <div style={{
+                height: '16px',
+                backgroundColor: '#e2e8f0',
+                borderRadius: '4px',
+                width: `${Math.random() * 40 + 40}%`,
+                marginBottom: '8px',
+                animation: 'pulse 1.5s ease-in-out infinite'
+              }} />
+              <div style={{
+                height: '12px',
+                backgroundColor: '#f1f5f9',
+                borderRadius: '4px',
+                width: `${Math.random() * 30 + 20}%`,
+                animation: 'pulse 1.5s ease-in-out infinite'
+              }} />
+            </div>
+          </div>
+        ))}
+        
+        <style>
+          {`
+            @keyframes pulse {
+              0%, 100% { opacity: 1; }
+              50% { opacity: 0.5; }
+            }
+          `}
+        </style>
       </div>
     )
   }
@@ -449,23 +512,26 @@ export default function FileList({ refreshTrigger, currentFolderId, setCurrentFo
   return (
     <div style={{ 
       backgroundColor: 'white', 
-      borderRadius: '8px',
-      border: '1px solid #eee',
-      overflow: 'hidden'
+      borderRadius: '12px',
+      border: '1px solid #e0e7ff',
+      overflow: 'hidden',
+      boxShadow: '0 1px 3px 0 rgba(0, 0, 0, 0.1), 0 1px 2px 0 rgba(0, 0, 0, 0.06)',
+      transition: 'all 0.2s ease-in-out'
     }}>
       {/* Search and Filter Header */}
       <div style={{
-        padding: '1rem',
-        backgroundColor: '#f8f9fa',
-        borderBottom: '1px solid #eee'
+        padding: '1.5rem',
+        backgroundColor: '#f8fafc',
+        borderBottom: '1px solid #e0e7ff'
       }}>
         {/* Breadcrumbs */}
         <div style={{
           display: 'flex',
           alignItems: 'center',
-          marginBottom: '1rem',
-          fontSize: '0.9rem',
-          color: '#666'
+          marginBottom: '1.5rem',
+          fontSize: '0.875rem',
+          color: '#64748b',
+          fontWeight: '500'
         }}>
           {breadcrumbs.map((crumb, index) => (
             <div key={crumb.id || 'home'} style={{ display: 'flex', alignItems: 'center' }}>
@@ -498,7 +564,7 @@ export default function FileList({ refreshTrigger, currentFolderId, setCurrentFo
           flexWrap: 'wrap',
           gap: '1rem'
         }}>
-          <div style={{ fontWeight: 'bold', color: '#333' }}>
+          <div style={{ fontWeight: '600', color: '#1e293b', fontSize: '1rem' }}>
             {folders.length + files.length > 0 ? 
               `${filteredFolders.length + filteredFiles.length} items (${filteredFolders.length} folders, ${filteredFiles.length} files)` :
               'Empty folder'
@@ -513,11 +579,23 @@ export default function FileList({ refreshTrigger, currentFolderId, setCurrentFo
                 backgroundColor: '#A9FF00',
                 color: '#000',
                 border: 'none',
-                padding: '0.5rem 1rem',
-                borderRadius: '4px',
+                padding: '0.625rem 1.25rem',
+                borderRadius: '8px',
                 cursor: 'pointer',
-                fontSize: '0.9rem',
-                fontWeight: 'bold'
+                fontSize: '0.875rem',
+                fontWeight: '600',
+                transition: 'all 0.2s ease-in-out',
+                boxShadow: '0 1px 2px 0 rgba(0, 0, 0, 0.05)'
+              }}
+              onMouseEnter={(e) => {
+                e.target.style.backgroundColor = '#9ef01a'
+                e.target.style.transform = 'translateY(-1px)'
+                e.target.style.boxShadow = '0 4px 8px 0 rgba(0, 0, 0, 0.12)'
+              }}
+              onMouseLeave={(e) => {
+                e.target.style.backgroundColor = '#A9FF00'
+                e.target.style.transform = 'translateY(0)'
+                e.target.style.boxShadow = '0 1px 2px 0 rgba(0, 0, 0, 0.05)'
               }}
             >
               📁 New Folder
@@ -530,12 +608,23 @@ export default function FileList({ refreshTrigger, currentFolderId, setCurrentFo
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
               style={{
-                padding: '0.5rem',
-                border: '1px solid #ddd',
-                borderRadius: '4px',
-                fontSize: '0.9rem',
+                padding: '0.625rem 1rem',
+                border: '1px solid #d1d5db',
+                borderRadius: '8px',
+                fontSize: '0.875rem',
                 minWidth: '200px',
-                maxWidth: '300px'
+                maxWidth: '320px',
+                outline: 'none',
+                transition: 'all 0.2s ease-in-out',
+                backgroundColor: '#ffffff'
+              }}
+              onFocus={(e) => {
+                e.target.style.borderColor = '#3b82f6'
+                e.target.style.boxShadow = '0 0 0 3px rgba(59, 130, 246, 0.1)'
+              }}
+              onBlur={(e) => {
+                e.target.style.borderColor = '#d1d5db'
+                e.target.style.boxShadow = 'none'
               }}
             />
           </div>
@@ -769,7 +858,6 @@ export default function FileList({ refreshTrigger, currentFolderId, setCurrentFo
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'space-between',
-            ':last-child': { borderBottom: 'none' },
             position: 'relative'
           }}
         >
