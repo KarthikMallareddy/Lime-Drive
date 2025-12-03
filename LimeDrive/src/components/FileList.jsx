@@ -399,21 +399,34 @@ export default function FileList({ refreshTrigger, currentFolderId, setCurrentFo
 
   const downloadFile = async (file) => {
     try {
-      const { data, error } = await supabase.storage
-        .from('users')
-        .download(file.path)
+      // Get current user session token
+      const { data: { session } } = await supabase.auth.getSession()
+      
+      if (!session) {
+        alert('Please log in to download files')
+        return
+      }
 
-      if (error) throw error
+      // Request signed URL from serverless function
+      const response = await fetch(`/api/get-signed-url?fileId=${file.id}&token=${session.access_token}`)
+      
+      if (!response.ok) {
+        const errorData = await response.json()
+        throw new Error(errorData.error || 'Failed to generate download link')
+      }
 
-      // Create download link
-      const url = URL.createObjectURL(data)
+      const { signedUrl, filename } = await response.json()
+
+      // Create secure download link
       const a = document.createElement('a')
-      a.href = url
-      a.download = file.filename
+      a.href = signedUrl
+      a.download = filename
+      a.target = '_blank'
+      a.rel = 'noopener noreferrer'
       document.body.appendChild(a)
       a.click()
       document.body.removeChild(a)
-      URL.revokeObjectURL(url)
+
     } catch (error) {
       console.error('Download error:', error.message)
       alert('Download failed: ' + error.message)
