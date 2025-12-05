@@ -16,14 +16,69 @@ const supabase = createClient(supabaseUrl, supabaseServiceKey, {
 })
 
 export default async function handler(req, res) {
-  // Only allow GET requests
-  if (req.method !== 'GET') {
+  // Allow both GET and POST methods
+  if (req.method !== 'GET' && req.method !== 'POST') {
     return res.status(405).json({ error: 'Method not allowed' })
   }
 
   try {
-    const { fileId, token } = req.query
+    let fileId, token, shareToken, filePath
 
+    if (req.method === 'GET') {
+      ({ fileId, token } = req.query)
+    } else {
+      ({ fileId, token, shareToken, filePath } = req.body)
+    }
+
+    // Handle share token authentication
+    if (shareToken && filePath) {
+      // Validate share token and get file access
+      const { data: shareData, error: shareError } = await supabase
+        .from('shares')
+        .select(`
+          *,
+          files!inner(*)
+        `)
+        .eq('share_token', shareToken)
+        .eq('is_active', true)
+        .single()
+
+      if (shareError || !shareData) {
+        return res.status(404).json({ error: 'Share not found or expired' })
+      }
+
+      // Check if share has expired
+      if (shareData.expires_at && new Date(shareData.expires_at) < new Date()) {
+        return res.status(403).json({ error: 'Share has expired' })
+      }
+
+      // Check permissions
+      if (shareData.permissions !== 'download') {
+        return res.status(403).json({ error: 'Download not permitted for this share' })
+      }
+
+      // Use the file from the share
+      const fileData = shareData.files
+
+      // Generate signed URL (expires in 1 hour)
+      const { data: signedUrlData, error: urlError } = await supabase.storage
+        .from('users')
+        .createSignedUrl(filePath, 3600, {
+          download: true
+        })
+
+      if (urlError) {
+        console.error('Signed URL generation error:', urlError)
+        return res.status(500).json({ error: 'Failed to generate download URL' })
+      }
+
+      return res.status(200).json({ 
+        signedUrl: signedUrlData.signedUrl,
+        filename: fileData.filename
+      })
+    }
+
+    // Handle regular authenticated user access
     if (!fileId || !token) {
       return res.status(400).json({ error: 'Missing fileId or authentication token' })
     }
