@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react'
 import { supabase } from '../supabaseClient'
 import { useAuth } from '../hooks/useAuth'
+import ShareModal from './ShareModal'
 
 export default function FileList({ refreshTrigger, currentFolderId, setCurrentFolderId }) {
   const [files, setFiles] = useState([])
@@ -21,6 +22,8 @@ export default function FileList({ refreshTrigger, currentFolderId, setCurrentFo
   const [draggedItem, setDraggedItem] = useState(null)
   const [dragOverFolder, setDragOverFolder] = useState(null)
   const [openMenuId, setOpenMenuId] = useState(null)
+  const [showShareModal, setShowShareModal] = useState(false)
+  const [itemToShare, setItemToShare] = useState(null)
   const { user } = useAuth()
 
   const fetchFiles = async () => {
@@ -844,6 +847,26 @@ export default function FileList({ refreshTrigger, currentFolderId, setCurrentFo
                 <button
                   onClick={(e) => {
                     e.stopPropagation()
+                    setItemToShare({ type: 'folder', data: folder })
+                    setShowShareModal(true)
+                    setOpenMenuId(null)
+                  }}
+                  style={{
+                    display: 'block',
+                    width: '100%',
+                    padding: '0.5rem 1rem',
+                    border: 'none',
+                    background: 'none',
+                    textAlign: 'left',
+                    cursor: 'pointer',
+                    color: '#A9FF00'
+                  }}
+                >
+                  🔗 Share
+                </button>
+                <button
+                  onClick={(e) => {
+                    e.stopPropagation()
                     deleteFolder(folder)
                   }}
                   style={{
@@ -945,6 +968,25 @@ export default function FileList({ refreshTrigger, currentFolderId, setCurrentFo
                   }}
                 >
                   📥 Download
+                </button>
+                <button
+                  onClick={() => {
+                    setItemToShare({ type: 'file', data: file })
+                    setShowShareModal(true)
+                    setOpenMenuId(null)
+                  }}
+                  style={{
+                    display: 'block',
+                    width: '100%',
+                    padding: '0.5rem 1rem',
+                    border: 'none',
+                    background: 'none',
+                    textAlign: 'left',
+                    cursor: 'pointer',
+                    color: '#A9FF00'
+                  }}
+                >
+                  🔗 Share
                 </button>
                 <button
                   onClick={() => openActionModal(file, 'move')}
@@ -1154,6 +1196,18 @@ export default function FileList({ refreshTrigger, currentFolderId, setCurrentFo
             zIndex: 50
           }}
           onClick={() => setOpenMenuId(null)}
+        />
+      )}
+
+      {/* Share Modal */}
+      {showShareModal && itemToShare && (
+        <ShareModal
+          file={itemToShare.type === 'file' ? itemToShare.data : null}
+          folder={itemToShare.type === 'folder' ? itemToShare.data : null}
+          onClose={() => {
+            setShowShareModal(false)
+            setItemToShare(null)
+          }}
         />
       )}
     </div>

@@ -98,7 +98,8 @@ export default function Register() {
                 padding: '0.75rem',
                 border: '1px solid #ddd',
                 borderRadius: '4px',
-                fontSize: '1rem'
+                fontSize: '1rem',
+                color: '#1e293b'
               }}
             />
           </div>
@@ -121,7 +122,8 @@ export default function Register() {
                 padding: '0.75rem',
                 border: '1px solid #ddd',
                 borderRadius: '4px',
-                fontSize: '1rem'
+                fontSize: '1rem',
+                color: '#1e293b'
               }}
             />
           </div>
@@ -144,7 +146,8 @@ export default function Register() {
                 padding: '0.75rem',
                 border: '1px solid #ddd',
                 borderRadius: '4px',
-                fontSize: '1rem'
+                fontSize: '1rem',
+                color: '#1e293b'
               }}
             />
           </div>

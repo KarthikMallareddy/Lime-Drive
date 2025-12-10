@@ -28,6 +28,12 @@ CREATE TABLE IF NOT EXISTS shares (
 -- Enable RLS on shares table
 ALTER TABLE shares ENABLE ROW LEVEL SECURITY;
 
+-- Drop existing policies if they exist (to avoid conflicts)
+DROP POLICY IF EXISTS "Users can view their own shares" ON shares;
+DROP POLICY IF EXISTS "Users can create their own shares" ON shares;
+DROP POLICY IF EXISTS "Users can update their own shares" ON shares;
+DROP POLICY IF EXISTS "Users can delete their own shares" ON shares;
+
 -- RLS policies for shares table
 CREATE POLICY "Users can view their own shares" ON shares
   FOR SELECT USING (auth.uid() = owner_id);

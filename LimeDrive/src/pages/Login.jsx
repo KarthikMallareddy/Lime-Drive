@@ -105,7 +105,8 @@ export default function Login() {
                 fontSize: '1rem',
                 outline: 'none',
                 transition: 'all 0.2s ease-in-out',
-                backgroundColor: '#f8fafc'
+                backgroundColor: '#f8fafc',
+                color: '#1e293b'
               }}
               onFocus={(e) => {
                 e.target.style.borderColor = '#3b82f6'
@@ -144,7 +145,8 @@ export default function Login() {
                 fontSize: '1rem',
                 outline: 'none',
                 transition: 'all 0.2s ease-in-out',
-                backgroundColor: '#f8fafc'
+                backgroundColor: '#f8fafc',
+                color: '#1e293b'
               }}
               onFocus={(e) => {
                 e.target.style.borderColor = '#3b82f6'

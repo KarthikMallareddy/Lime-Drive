@@ -4,6 +4,7 @@ import { useAuth } from './hooks/useAuth'
 import Login from './pages/Login'
 import Register from './pages/Register'
 import Dashboard from './pages/Dashboard'
+import SharePage from './pages/SharePage'
 
 // Protected Route component
 function ProtectedRoute({ children }) {
@@ -75,6 +76,7 @@ export default function App() {
             </ProtectedRoute>
           } 
         />
+        <Route path="/share/:token" element={<SharePage />} />
         <Route path="/" element={<Navigate to="/dashboard" />} />
       </Routes>
     </Router>
