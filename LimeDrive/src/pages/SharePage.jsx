@@ -1,5 +1,15 @@
 import { useState, useEffect } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
+import mockApiHandler from '../utils/mockApi'
+
+// Use mock API for development, real API for production
+const isDevelopment = import.meta.env.DEV
+const apiCall = async (endpoint, options = {}) => {
+  if (isDevelopment) {
+    return mockApiHandler(endpoint, options)
+  }
+  return fetch(endpoint, options)
+}
 
 export default function SharePage() {
   const [shareData, setShareData] = useState(null)
@@ -21,7 +31,7 @@ export default function SharePage() {
     }
 
     try {
-      const response = await fetch(`/api/validate-share?token=${token}`)
+      const response = await apiCall(`/api/validate-share?token=${token}`)
       
       if (!response.ok) {
         const errorData = await response.json()
@@ -45,13 +55,13 @@ export default function SharePage() {
     setDownloadLoading(true)
     try {
       // Get signed URL for download
-      const response = await fetch('/api/get-signed-url', {
+      const response = await apiCall('/api/get-signed-url', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
-          filePath: shareData.file.path,
+          filePath: shareData.file?.path,
           shareToken: token // Pass the share token for validation
         })
       })

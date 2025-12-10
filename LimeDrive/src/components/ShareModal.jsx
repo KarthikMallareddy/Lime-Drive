@@ -1,5 +1,15 @@
 import { useState } from 'react'
 import { supabase } from '../supabaseClient'
+import mockApiHandler from '../utils/mockApi'
+
+// Use mock API for development, real API for production
+const isDevelopment = import.meta.env.DEV
+const apiCall = async (endpoint, options) => {
+  if (isDevelopment) {
+    return mockApiHandler(endpoint, options)
+  }
+  return fetch(endpoint, options)
+}
 
 export default function ShareModal({ file, folder, onClose }) {
   const [loading, setLoading] = useState(false)
@@ -26,7 +36,7 @@ export default function ShareModal({ file, folder, onClose }) {
       }
 
       // Create share via API
-      const response = await fetch('/api/create-share', {
+      const response = await apiCall('/api/create-share', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
