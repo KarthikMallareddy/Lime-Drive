@@ -17,10 +17,13 @@ export const mockApiHandler = async (endpoint, options = {}) => {
       const data = JSON.parse(body)
       const shareToken = generateShareToken()
       
+      // Get the correct origin (works for localhost AND production)
+      const origin = typeof window !== 'undefined' ? window.location.origin : 'http://localhost:5173'
+      
       const share = {
         id: Math.random().toString(36).substr(2, 9),
         token: shareToken,
-        url: `${window.location.origin}/share/${shareToken}`,
+        url: `${origin}/share/${shareToken}`,
         shareType: data.shareType || 'public',
         permissions: data.permissions || 'download',
         isActive: true,
@@ -35,8 +38,10 @@ export const mockApiHandler = async (endpoint, options = {}) => {
         viewCount: 0
       }
 
+      console.log('📤 Share created with URL:', share.url)
       return new Response(JSON.stringify({ share }), { status: 201 })
     } catch (error) {
+      console.error('❌ Share creation error:', error)
       return new Response(JSON.stringify({ error: error.message }), { status: 500 })
     }
   }
