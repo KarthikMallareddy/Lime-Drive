@@ -48,23 +48,62 @@ export default function Register() {
   return (
     <div style={{ 
       minHeight: '100vh', 
-      display: 'flex', 
-      alignItems: 'center', 
-      justifyContent: 'center',
+      display: 'grid',
+      gridTemplateColumns: '1fr 1fr',
       background: 'linear-gradient(135deg, #0f172a 0%, #1e293b 100%)',
-      fontFamily: 'Inter, system-ui, -apple-system, BlinkMacSystemFont, sans-serif',
-      padding: '1rem'
+      fontFamily: 'Inter, system-ui, -apple-system, BlinkMacSystemFont, sans-serif'
     }}>
+      {/* Left side - Branding */}
+      <div style={{
+        display: 'flex',
+        flexDirection: 'column',
+        justifyContent: 'center',
+        alignItems: 'center',
+        padding: '4rem',
+        color: 'white'
+      }}>
+        <div style={{
+          width: '120px',
+          height: '120px',
+          background: 'linear-gradient(135deg, #A9FF00 0%, #7fc700 100%)',
+          borderRadius: '24px',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          marginBottom: '2rem',
+          boxShadow: '0 20px 60px rgba(169, 255, 0, 0.3)'
+        }}>
+          <svg width="64" height="64" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <path d="M3 15C3 17.8284 3 19.2426 3.87868 20.1213C4.75736 21 6.17157 21 9 21H15C17.8284 21 19.2426 21 20.1213 20.1213C21 19.2426 21 17.8284 21 15" stroke="#000000" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+            <path d="M12 3V16M12 16L16 11.625M12 16L8 11.625" stroke="#000000" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+          </svg>
+        </div>
+        <h1 style={{
+          fontSize: '3.5rem',
+          fontWeight: '800',
+          margin: '0 0 1rem 0',
+          letterSpacing: '-0.02em'
+        }}>LimeDrive</h1>
+        <p style={{
+          fontSize: '1.25rem',
+          color: '#94a3b8',
+          margin: 0,
+          textAlign: 'center',
+          maxWidth: '400px'
+        }}>
+          Join thousands of users storing their files securely in the cloud.
+        </p>
+      </div>
+
+      {/* Right side - Form */}
       <div style={{
         backgroundColor: 'white',
-        padding: '3rem 2.5rem',
-        borderRadius: '20px',
-        boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.25)',
-        width: '100%',
-        maxWidth: '900px',
-        border: '1px solid rgba(255, 255, 255, 0.1)',
-        backdropFilter: 'blur(16px)'
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        padding: '4rem'
       }}>
+        <div style={{ width: '100%', maxWidth: '480px' }}>
         <div style={{ textAlign: 'center', marginBottom: '3rem' }}>
           <div style={{
             width: '64px',
@@ -326,6 +365,7 @@ export default function Register() {
             Sign In
           </Link>
         </p>
+        </div>
       </div>
     </div>
   )
