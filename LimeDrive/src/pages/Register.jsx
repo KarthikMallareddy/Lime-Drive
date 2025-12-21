@@ -51,7 +51,7 @@ export default function Register() {
       display: 'flex', 
       alignItems: 'center', 
       justifyContent: 'center',
-      background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+      background: 'linear-gradient(135deg, #0f172a 0%, #1e293b 100%)',
       fontFamily: 'Inter, system-ui, -apple-system, BlinkMacSystemFont, sans-serif',
       padding: '1rem'
     }}>
