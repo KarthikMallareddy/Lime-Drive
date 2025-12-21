@@ -61,7 +61,7 @@ export default function Register() {
         borderRadius: '20px',
         boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.25)',
         width: '100%',
-        maxWidth: '420px',
+        maxWidth: '900px',
         border: '1px solid rgba(255, 255, 255, 0.1)',
         backdropFilter: 'blur(16px)'
       }}>
