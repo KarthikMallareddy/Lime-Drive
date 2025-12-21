@@ -39,15 +39,17 @@ export default function Dashboard() {
           <div style={{
             width: '48px',
             height: '48px',
-            background: 'linear-gradient(135deg, #60a5fa 0%, #3b82f6 100%)',
+            background: 'linear-gradient(135deg, #A9FF00 0%, #7fc700 100%)',
             borderRadius: '12px',
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
-            fontSize: '1.75rem',
-            boxShadow: '0 10px 30px rgba(59, 130, 246, 0.3)'
+            boxShadow: '0 10px 30px rgba(169, 255, 0, 0.2)'
           }}>
-            ☁️
+            <svg width="28" height="28" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <path d="M3 15C3 17.8284 3 19.2426 3.87868 20.1213C4.75736 21 6.17157 21 9 21H15C17.8284 21 19.2426 21 20.1213 20.1213C21 19.2426 21 17.8284 21 15" stroke="#000000" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+              <path d="M12 3V16M12 16L16 11.625M12 16L8 11.625" stroke="#000000" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+            </svg>
           </div>
           <div>
             <h1 style={{ 
@@ -114,24 +116,34 @@ export default function Dashboard() {
             onClick={handleSignOut}
             style={{
               padding: '0.625rem 1.25rem',
-              backgroundColor: 'rgba(148, 163, 184, 0.1)',
-              border: '1px solid rgba(148, 163, 184, 0.2)',
+              backgroundColor: 'rgba(239, 68, 68, 0.1)',
+              border: '1px solid rgba(239, 68, 68, 0.2)',
               borderRadius: '8px',
-              color: '#cbd5e1',
+              color: '#fca5a5',
               cursor: 'pointer',
               fontSize: '0.875rem',
-              fontWeight: '500',
-              transition: 'all 0.2s ease-in-out'
+              fontWeight: '600',
+              transition: 'all 0.2s ease-in-out',
+              display: 'flex',
+              alignItems: 'center',
+              gap: '0.5rem'
             }}
             onMouseEnter={(e) => {
-              e.target.style.backgroundColor = 'rgba(148, 163, 184, 0.2)'
-              e.target.style.borderColor = 'rgba(148, 163, 184, 0.3)'
+              e.target.style.backgroundColor = 'rgba(239, 68, 68, 0.2)'
+              e.target.style.borderColor = 'rgba(239, 68, 68, 0.3)'
+              e.target.style.color = '#fef2f2'
             }}
             onMouseLeave={(e) => {
-              e.target.style.backgroundColor = 'rgba(148, 163, 184, 0.1)'
-              e.target.style.borderColor = 'rgba(148, 163, 184, 0.2)'
+              e.target.style.backgroundColor = 'rgba(239, 68, 68, 0.1)'
+              e.target.style.borderColor = 'rgba(239, 68, 68, 0.2)'
+              e.target.style.color = '#fca5a5'
             }}
           >
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <path d="M15 3H19C20.1046 3 21 3.89543 21 5V19C21 20.1046 20.1046 21 19 21H15" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+              <path d="M10 17L15 12L10 7" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+              <path d="M15 12H3" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+            </svg>
             Sign Out
           </button>
         </div>
