@@ -32,8 +32,7 @@ export default function Login() {
       display: 'flex', 
       alignItems: 'center', 
       justifyContent: 'center',
-      backgroundColor: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
-      backgroundImage: 'linear-gradient(135deg, #f093fb 0%, #f5576c 50%, #4facfe 100%)',
+      background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
       fontFamily: 'Inter, system-ui, -apple-system, BlinkMacSystemFont, sans-serif',
       padding: '1rem'
     }}>
@@ -100,22 +99,23 @@ export default function Login() {
               style={{
                 width: '100%',
                 padding: '1rem',
-                border: '1px solid #d1d5db',
+                border: '2px solid #e2e8f0',
                 borderRadius: '12px',
                 fontSize: '1rem',
                 outline: 'none',
                 transition: 'all 0.2s ease-in-out',
-                backgroundColor: '#f8fafc',
-                color: '#1e293b'
+                backgroundColor: '#ffffff',
+                color: '#0f172a',
+                fontWeight: '500'
               }}
               onFocus={(e) => {
-                e.target.style.borderColor = '#3b82f6'
+                e.target.style.borderColor = '#A9FF00'
                 e.target.style.backgroundColor = '#ffffff'
-                e.target.style.boxShadow = '0 0 0 3px rgba(59, 130, 246, 0.1)'
+                e.target.style.boxShadow = '0 0 0 3px rgba(169, 255, 0, 0.15)'
               }}
               onBlur={(e) => {
-                e.target.style.borderColor = '#d1d5db'
-                e.target.style.backgroundColor = '#f8fafc'
+                e.target.style.borderColor = '#e2e8f0'
+                e.target.style.backgroundColor = '#ffffff'
                 e.target.style.boxShadow = 'none'
               }}
             />
@@ -140,22 +140,23 @@ export default function Login() {
               style={{
                 width: '100%',
                 padding: '1rem',
-                border: '1px solid #d1d5db',
+                border: '2px solid #e2e8f0',
                 borderRadius: '12px',
                 fontSize: '1rem',
                 outline: 'none',
                 transition: 'all 0.2s ease-in-out',
-                backgroundColor: '#f8fafc',
-                color: '#1e293b'
+                backgroundColor: '#ffffff',
+                color: '#0f172a',
+                fontWeight: '500'
               }}
               onFocus={(e) => {
-                e.target.style.borderColor = '#3b82f6'
+                e.target.style.borderColor = '#A9FF00'
                 e.target.style.backgroundColor = '#ffffff'
-                e.target.style.boxShadow = '0 0 0 3px rgba(59, 130, 246, 0.1)'
+                e.target.style.boxShadow = '0 0 0 3px rgba(169, 255, 0, 0.15)'
               }}
               onBlur={(e) => {
-                e.target.style.borderColor = '#d1d5db'
-                e.target.style.backgroundColor = '#f8fafc'
+                e.target.style.borderColor = '#e2e8f0'
+                e.target.style.backgroundColor = '#ffffff'
                 e.target.style.boxShadow = 'none'
               }}
             />
