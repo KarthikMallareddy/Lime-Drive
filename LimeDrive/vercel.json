@@ -1,4 +1,7 @@
 {
+  "buildCommand": "npm run build",
+  "installCommand": "npm install",
+  "framework": "vite",
   "functions": {
     "api/get-signed-url.js": {
       "maxDuration": 10
